@@ -1,9 +1,15 @@
 fileFormatVersion: 2
-guid: fa1c52a592026e34c9fb4693893f7b0e
-timeCreated: 1508520182
+guid: 949e89f1f6f8091459a50c200e8a687a
+timeCreated: 1508455037
 licenseType: Free
 TextureImporter:
-  fileIDToRecycleName: {}
+  fileIDToRecycleName:
+    21300000: coin spinning_0
+    21300002: coin spinning_1
+    21300004: coin spinning_2
+    21300006: coin spinning_3
+    21300008: coin spinning_4
+    21300010: coin spinning_5
   serializedVersion: 4
   mipmaps:
     mipMapMode: 0
@@ -34,11 +40,11 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
-  alignment: 9
-  spritePivot: {x: 0.03628118, y: 0.5}
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spritePixelsToUnits: 100
   alphaUsage: 1
@@ -92,7 +98,85 @@ TextureImporter:
     overridden: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: coin spinning_0
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 58
+        width: 84
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: coin spinning_1
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 58
+        width: 72
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: coin spinning_2
+      rect:
+        serializedVersion: 2
+        x: 275
+        y: 58
+        width: 36
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: coin spinning_3
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 58
+        width: 12
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: coin spinning_4
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 58
+        width: 36
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: coin spinning_5
+      rect:
+        serializedVersion: 2
+        x: 617
+        y: 58
+        width: 72
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: 0
     outline: []
   spritePackingTag: 
   userData: 
