@@ -11,6 +11,15 @@ public class Explosion : MonoBehaviour {
     {
         if (other.tag == "Player" || other.tag == "Enemy")
         {
+            if (other.tag == "Enemy")
+            {
+                other.GetComponent<Enemy>().GetHit(bombDamage);
+            }
+            if (other.tag == "Player")
+            {
+                other.GetComponent<Dog>().GetHit(bombDamage);
+            }
+
             Vector3 forceAmount = (other.transform.position - gameObject.transform.position).normalized * bombForce * (1 / Time.deltaTime);
             other.GetComponent<Rigidbody2D>().AddForce(forceAmount);
         }

@@ -6,15 +6,12 @@ using UnityEngine.UI;
 public class HUD : MonoBehaviour {
 
     [SerializeField]
-    private Text text;
+    private Text scoreText, playerHealthText;
 
     public void Start()
     {
-        GameManager.instance.OnScore += ScoreChange;
-    }	
-
-    private void ScoreChange (int x)
-    {
-        text.text = x.ToString();
-    }
+        GameManager.instance.OnScore += (int x) => {
+            scoreText.text = x.ToString();
+        }; 
+    } 
 }

@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour {
 
-    public delegate void OnScoredHander(int x);
-    public OnScoredHander OnScore;
+    public delegate void OnScoredHandler(int x);
+    public OnScoredHandler OnScore; 
 
     public static GameManager instance;
     
-    private int score;
+    private int score; 
 
     public void Awake()
     {
@@ -21,15 +21,13 @@ public class GameManager : MonoBehaviour {
         instance = this;
     }
 
-    public int AddScore(int val)
+    public void AddScore(int val)
     {
         score += val;
 
         if (OnScore != null)
         {
             OnScore.Invoke(score);
-        }
-
-        return score;
-    }
+        } 
+    } 
 }
