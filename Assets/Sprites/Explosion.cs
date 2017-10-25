@@ -20,7 +20,7 @@ public class Explosion : MonoBehaviour {
                 other.GetComponent<Dog>().GetHit(bombDamage);
             }
 
-            Vector3 forceAmount = (other.transform.position - gameObject.transform.position).normalized * bombForce * (1 / Time.deltaTime);
+            Vector3 forceAmount = (other.transform.position - gameObject.transform.position).normalized * bombForce;
             other.GetComponent<Rigidbody2D>().AddForce(forceAmount);
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Dog : MonoBehaviour {
 
@@ -13,15 +14,18 @@ public class Dog : MonoBehaviour {
     public float dashTime = 1f;
     public float dashCooldown = 1f;
     public float bombSpawnOffset = 2f;
+    public float bombAimedThrowStrength = 10f;
     public float invincibiltyDamageTimer = .2f;
     public Foot foot;
     public GameObject doubleJumpParticle;
     public GameObject bomb;
     public WallCollisionDetector leftCollider;
     public WallCollisionDetector rightCollider;
+    public Text healthText;
     public AudioClip jumpAudioClip;
     public AudioClip ouchAudioClip;
 
+    private LineRenderer _lineRenderer;
     private AudioSource _audioSource;
     private SpriteRenderer _spriteRenderer;
     private Rigidbody2D _rigidBody;
@@ -30,6 +34,7 @@ public class Dog : MonoBehaviour {
     private bool onGround;
     private bool isDashing;
     private bool hasJumpDash;
+    private bool isAiming = false;
     private float dashCooldownTimer = 100f;
     private float getHitCooldownTimer = 0f;
 
@@ -39,11 +44,14 @@ public class Dog : MonoBehaviour {
         _rigidBody = GetComponent<Rigidbody2D>();
         _animator = GetComponent<Animator>();
         _audioSource = GetComponent<AudioSource>();
+        _lineRenderer = GetComponent<LineRenderer>();
 
         foot.onLand += OnLand;
         foot.onLeaveGround += OnLeaveGround;
 
         getHitCooldownTimer = invincibiltyDamageTimer;
+        healthText.text = "Health: " + health.ToString();
+        _lineRenderer.positionCount = 2;
     }
 
     public void Update()
@@ -65,6 +73,8 @@ public class Dog : MonoBehaviour {
         _audioSource.PlayOneShot(ouchAudioClip);
         StartCoroutine(Blink(invincibiltyDamageTimer));
         health -= damage;
+        healthText.text = "Health: " + health.ToString();
+        _rigidBody.velocity = Vector2.up * jumpForce;
         if (health <= 0)
         {
             Die();
@@ -79,26 +89,47 @@ public class Dog : MonoBehaviour {
     private void HandleInput()
     {
         // Attack
-        HandleAttack(); 
+        HandleAttack();
+        if (isAiming)
+            return;
 
-        // Horizontal Movement
+        // Movement
+        HandleWalk();
+        HandleJump();
+        HandleDash();
+    }
+
+    private void HandleWalk()
+    {
         bool touchingWallInWrongDirection = false;
         if (Input.GetAxisRaw("Horizontal") >= 0.1 && rightCollider.isHittingWall) touchingWallInWrongDirection = true;
         if (Input.GetAxisRaw("Horizontal") <= 0.1 && leftCollider.isHittingWall) touchingWallInWrongDirection = true;
         if (!touchingWallInWrongDirection)
             _rigidBody.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * runSpeed, _rigidBody.velocity.y);
-
-        // Vertical Movement
-        HandleJump();
-        HandleDash();
     }
 
     private void HandleAttack()
     {
+        isAiming = Input.GetButton("Fire3");
+        Vector3 axisInput = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), 0);
+
+        // Aiming Line
+        if (isAiming)
+            _lineRenderer.SetPositions(new Vector3[] { gameObject.transform.position, gameObject.transform.position + (axisInput * 1.5f) });
+        else
+            _lineRenderer.SetPositions(new Vector3[] { gameObject.transform.position, gameObject.transform.position});
+
+        // Throw Bomba
         if (Input.GetButtonDown("Fire1"))
         {
-            GameObject bombClone = Instantiate(bomb, transform.position + ((new Vector3(_rigidBody.velocity.x, _rigidBody.velocity.y, 0)).normalized * bombSpawnOffset), Quaternion.identity);
-            bombClone.GetComponent<Rigidbody2D>().velocity = _rigidBody.velocity;
+            if (isAiming)
+            {
+                GameObject bombClone = Instantiate(bomb, transform.position + (axisInput.normalized * bombSpawnOffset), Quaternion.identity);
+                bombClone.GetComponent<Rigidbody2D>().velocity = axisInput * bombAimedThrowStrength;
+            } else {
+                GameObject bombClone = Instantiate(bomb, transform.position + ((new Vector3(_rigidBody.velocity.x, _rigidBody.velocity.y, 0)).normalized * bombSpawnOffset), Quaternion.identity);
+                bombClone.GetComponent<Rigidbody2D>().velocity = _rigidBody.velocity;
+            }  
         }
     }
 
@@ -128,8 +159,9 @@ public class Dog : MonoBehaviour {
     }
 
     private void HandleJump()
-    {
-        if (Input.GetButtonDown("Jump") || (Input.GetButtonDown("Vertical")&&Input.GetAxisRaw("Vertical")>=0.1))
+    { 
+        //if (Input.GetButtonDown("Jump") || Input.GetAxisRaw("Vertical")>=0.1)
+        if (Input.GetButtonDown("Jump") || (Input.GetButtonDown("Vertical")))
         {
 
             if (numJumps >= maxJumps || (!onGround && _rigidBody.velocity.y > dashForce * 2))

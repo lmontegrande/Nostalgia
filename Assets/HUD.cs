@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class HUD : MonoBehaviour {
 
     [SerializeField]
-    private Text scoreText, playerHealthText;
+    private Text scoreText;
 
     public void Start()
     {
