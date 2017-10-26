@@ -53,7 +53,7 @@ public class BubbleEnemy : Enemy {
     {
         isDead = true;
         Destroy(GetComponent<CircleCollider2D>());
-        _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, deathFlyForce);
+        //_rigidbody.velocity = new Vector2(_rigidbody.velocity.x, deathFlyForce);
         Destroy(gameObject, 1f);
         StartCoroutine(Blink());
     }

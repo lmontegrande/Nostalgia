@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class Dog : MonoBehaviour {
 
     public int health = 5;
+    public int jumpDamage = 1;
     public float jumpForce = 10f;
     public float dashForce = 5f;
     public float runSpeed = 5f;
@@ -15,15 +16,21 @@ public class Dog : MonoBehaviour {
     public float dashCooldown = 1f;
     public float bombSpawnOffset = 2f;
     public float bombAimedThrowStrength = 10f;
+    public float bombNeutralThrowStrength = 1.5f;
     public float invincibiltyDamageTimer = .2f;
+    public int playerNum = 1;
     public Foot foot;
     public GameObject doubleJumpParticle;
     public GameObject bomb;
     public WallCollisionDetector leftCollider;
     public WallCollisionDetector rightCollider;
     public Text healthText;
+    public Text coinText;
     public AudioClip jumpAudioClip;
     public AudioClip ouchAudioClip;
+
+    [HideInInspector]
+    public bool isDead = false;
 
     private LineRenderer _lineRenderer;
     private AudioSource _audioSource;
@@ -31,6 +38,7 @@ public class Dog : MonoBehaviour {
     private Rigidbody2D _rigidBody;
     private Animator _animator;
     private int numJumps;
+    private int coinScore = 0;
     private bool onGround;
     private bool isDashing;
     private bool hasJumpDash;
@@ -48,15 +56,18 @@ public class Dog : MonoBehaviour {
 
         foot.onLand += OnLand;
         foot.onLeaveGround += OnLeaveGround;
+        foot.onJumpOnEnemyHandler += OnJumpOnEnemy;
 
         getHitCooldownTimer = invincibiltyDamageTimer;
         healthText.text = "Health: " + health.ToString();
+        coinText.text = "Coins: " + coinScore.ToString();
         _lineRenderer.positionCount = 2;
+        GameManager.instance.PlayerJoined();
     }
 
     public void Update()
     {
-        if (isDashing) return;
+        if (isDashing || isDead) return;
 
         HandleAnimation();
         HandleInput();
@@ -81,9 +92,20 @@ public class Dog : MonoBehaviour {
         }
     }
 
+    public void GainCoin(int coinVal)
+    {
+        coinScore += coinVal;
+        coinText.text = "Coins: " + coinScore.ToString();
+    }
+
     private void Die()
     {
         // TODO
+        isDead = true;
+        GameManager.instance.PlayerDied();
+        Destroy(GetComponent<BoxCollider2D>());
+        Destroy(GetComponent<CircleCollider2D>());
+        Destroy(gameObject, 1f);
     }
 
     private void HandleInput()
@@ -102,16 +124,16 @@ public class Dog : MonoBehaviour {
     private void HandleWalk()
     {
         bool touchingWallInWrongDirection = false;
-        if (Input.GetAxisRaw("Horizontal") >= 0.1 && rightCollider.isHittingWall) touchingWallInWrongDirection = true;
-        if (Input.GetAxisRaw("Horizontal") <= 0.1 && leftCollider.isHittingWall) touchingWallInWrongDirection = true;
+        if (Input.GetAxisRaw("Horizontal_Player" + playerNum) >= 0.1 && rightCollider.isHittingWall) touchingWallInWrongDirection = true;
+        if (Input.GetAxisRaw("Horizontal_Player" + playerNum) <= 0.1 && leftCollider.isHittingWall) touchingWallInWrongDirection = true;
         if (!touchingWallInWrongDirection)
-            _rigidBody.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * runSpeed, _rigidBody.velocity.y);
+            _rigidBody.velocity = new Vector2(Input.GetAxisRaw("Horizontal_Player" + playerNum) * runSpeed, _rigidBody.velocity.y);
     }
 
     private void HandleAttack()
     {
-        isAiming = Input.GetButton("Fire3");
-        Vector3 axisInput = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), 0);
+        isAiming = Input.GetButton("Fire3_Player" + playerNum);
+        Vector3 axisInput = new Vector3(Input.GetAxisRaw("Horizontal_Player" + playerNum), Input.GetAxisRaw("Vertical_Player" + playerNum), 0);
 
         // Aiming Line
         if (isAiming)
@@ -120,7 +142,7 @@ public class Dog : MonoBehaviour {
             _lineRenderer.SetPositions(new Vector3[] { gameObject.transform.position, gameObject.transform.position});
 
         // Throw Bomba
-        if (Input.GetButtonDown("Fire1"))
+        if (Input.GetButtonDown("Fire1_Player" + playerNum))
         {
             if (isAiming)
             {
@@ -128,14 +150,15 @@ public class Dog : MonoBehaviour {
                 bombClone.GetComponent<Rigidbody2D>().velocity = axisInput * bombAimedThrowStrength;
             } else {
                 GameObject bombClone = Instantiate(bomb, transform.position + ((new Vector3(_rigidBody.velocity.x, _rigidBody.velocity.y, 0)).normalized * bombSpawnOffset), Quaternion.identity);
-                bombClone.GetComponent<Rigidbody2D>().velocity = _rigidBody.velocity;
+                //bombClone.GetComponent<Rigidbody2D>().velocity = _rigidBody.velocity * bombNeutralThrowStrength;
+                bombClone.GetComponent<Rigidbody2D>().velocity = axisInput * bombAimedThrowStrength;
             }  
         }
     }
 
     private void HandleDash()
     {
-        if (Input.GetButtonDown("Fire2"))
+        if (Input.GetButtonDown("Fire2_Player" + playerNum))
         {
             if (!hasJumpDash && !onGround) return;
 
@@ -151,17 +174,11 @@ public class Dog : MonoBehaviour {
             }
         }
     }
-
-    private void HandleCooldowns()
-    {
-        getHitCooldownTimer += Time.deltaTime;
-        dashCooldownTimer += Time.deltaTime;
-    }
-
+    
     private void HandleJump()
     { 
         //if (Input.GetButtonDown("Jump") || Input.GetAxisRaw("Vertical")>=0.1)
-        if (Input.GetButtonDown("Jump") || (Input.GetButtonDown("Vertical")))
+        if (Input.GetButtonDown("Jump_Player" + playerNum) || (Input.GetButtonDown("Vertical_Player" + playerNum)))
         {
 
             if (numJumps >= maxJumps || (!onGround && _rigidBody.velocity.y > dashForce * 2))
@@ -182,6 +199,12 @@ public class Dog : MonoBehaviour {
         }
     }
 
+    private void HandleCooldowns()
+    {
+        getHitCooldownTimer += Time.deltaTime;
+        dashCooldownTimer += Time.deltaTime;
+    }
+
     private void HandleAnimation()
     {
         _animator.SetFloat("x-speed", Mathf.Abs(_rigidBody.velocity.x));
@@ -190,6 +213,14 @@ public class Dog : MonoBehaviour {
         if (_rigidBody.velocity.x < 0)
             _spriteRenderer.flipX = false;
 
+    }
+
+    private void OnJumpOnEnemy(Enemy enemy)
+    {
+        enemy.GetHit(jumpDamage);
+        _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, jumpForce);
+
+        _audioSource.PlayOneShot(ouchAudioClip);
     }
 
     private void OnLand()
@@ -240,13 +271,14 @@ public class Dog : MonoBehaviour {
 
     private IEnumerator Blink(float duration)
     {
+        Color currentColor = GetComponent<SpriteRenderer>().color;
         while (getHitCooldownTimer < duration)
         {
             yield return new WaitForSeconds(.05f);
             GetComponent<SpriteRenderer>().color = new Color(0xFF, 0xFF, 0xFF, 0x00);
             yield return new WaitForSeconds(.05f);
-            GetComponent<SpriteRenderer>().color = new Color(0xFF, 0xFF, 0xFF, 0xFF);
+            GetComponent<SpriteRenderer>().color = currentColor;
         }
-        GetComponent<SpriteRenderer>().color = new Color(0xFF, 0xFF, 0xFF, 0xFF);
+        GetComponent<SpriteRenderer>().color = currentColor;
     }
 }

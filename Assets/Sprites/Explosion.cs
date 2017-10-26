@@ -9,7 +9,7 @@ public class Explosion : MonoBehaviour {
 
 	public void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.tag == "Player" || other.tag == "Enemy")
+        if (other.tag == "Player" || other.tag == "Enemy" || other.tag == "Floor")
         {
             if (other.tag == "Enemy")
             {
@@ -19,9 +19,12 @@ public class Explosion : MonoBehaviour {
             {
                 other.GetComponent<Dog>().GetHit(bombDamage);
             }
-
-            Vector3 forceAmount = (other.transform.position - gameObject.transform.position).normalized * bombForce;
-            other.GetComponent<Rigidbody2D>().AddForce(forceAmount);
+            if (other.tag == "Floor")
+            {
+                
+                Vector3 forceAmount = (other.transform.position - gameObject.transform.position).normalized * bombForce;
+                other.GetComponent<RespawningFloor>().OnGetHit(forceAmount);
+            }
         }
     }
 }

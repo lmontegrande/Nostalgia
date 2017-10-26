@@ -13,12 +13,14 @@ public class Coin : MonoBehaviour {
         {
             GetComponent<AudioSource>().PlayOneShot(coinClip);
             GetComponent<Animator>().speed = 3;
+            other.GetComponent<Dog>().GainCoin(coinValue);
             GameManager.instance.AddScore(coinValue);
             coinValue = 0;
 
             Destroy(GetComponent<CircleCollider2D>());
             StartCoroutine(Blink());
-            Destroy(gameObject, 1f);
+            Destroy(gameObject, .5f);
+            Destroy(GetComponent<Rigidbody2D>());
         }
     }
 
