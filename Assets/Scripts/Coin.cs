@@ -6,8 +6,19 @@ public class Coin : MonoBehaviour {
 
     public AudioClip coinClip;
     public int coinValue = 1;
+    public bool isBouncingCoin = false;
+    public float bouncingCoinLifeSpan = 2f;
 
-	void OnTriggerEnter2D(Collider2D other)
+    public void Start()
+    {
+        if (!isBouncingCoin) return;
+
+        StartCoroutine(Blink()); 
+        Destroy(gameObject, bouncingCoinLifeSpan);
+    }
+
+
+    public void OnTriggerEnter2D(Collider2D other)
     {
         if (other.tag == "Player")
         {
@@ -26,13 +37,16 @@ public class Coin : MonoBehaviour {
 
     private IEnumerator Blink()
     {
+        if (isBouncingCoin)
+        {
+            yield return new WaitForSeconds(bouncingCoinLifeSpan/2);
+        }
         while (true)
         {
             yield return new WaitForSeconds(.05f);
             GetComponent<SpriteRenderer>().color = new Color(0xFF, 0xFF, 0xFF, 0x00);
             yield return new WaitForSeconds(.05f);
             GetComponent<SpriteRenderer>().color = new Color(0xFF, 0xFF, 0xFF, 0xFF);
-        }
-        
+        } 
     }
 }

@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour {
     public bool versusMode = false;
     public GameObject dogPrefab;
 
-    public Color player1Color, player2Color, player3Color, player4Color;
+    public Color player1Color, player2Color, player3Color, player4Color, player5Color;
 
     public delegate void OnScoredHandler(int x);
     public OnScoredHandler OnScore;
@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour {
     private GameObject player2;
     private GameObject player3;
     private GameObject player4;
+    private GameObject player5;
 
     public void Awake()
     {
@@ -54,14 +55,21 @@ public class GameManager : MonoBehaviour {
             if (player3 != null) return;
             player3 = Instantiate(dogPrefab, new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, 0), Quaternion.identity);
             player3.GetComponent<Dog>().playerNum = 3;
-            player3.GetComponent<SpriteRenderer>().color = player2Color;
+            player3.GetComponent<SpriteRenderer>().color = player3Color;
         }
         if (Input.GetButtonDown("Start_Player4"))
         {
             if (player4 != null) return;
             player4 = Instantiate(dogPrefab, new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, 0), Quaternion.identity);
             player4.GetComponent<Dog>().playerNum = 4;
-            player4.GetComponent<SpriteRenderer>().color = player2Color;
+            player4.GetComponent<SpriteRenderer>().color = player4Color;
+        }
+        if (Input.GetButtonDown("Start_Player5"))
+        {
+            if (player5 != null) return;
+            player5 = Instantiate(dogPrefab, new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, 0), Quaternion.identity);
+            player5.GetComponent<Dog>().playerNum = 5;
+            player5.GetComponent<SpriteRenderer>().color = player5Color;
         }
     }
 

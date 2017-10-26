@@ -6,7 +6,12 @@ public class Bomb : MonoBehaviour {
 
     [SerializeField]
     public GameObject explosion;
+
+    [HideInInspector]
     public float explosionTime = 1f;
+
+    [HideInInspector]
+    public int bonusExplosions = 0;
 
     public void Start()
     {
@@ -17,7 +22,7 @@ public class Bomb : MonoBehaviour {
     {
         yield return new WaitForSeconds(explosionTime);
         GameObject explosionClone = Instantiate(explosion, transform.position, Quaternion.identity);
-        Destroy(explosionClone, .5f);
+        explosionClone.GetComponent<Explosion>().bonusExplosions = bonusExplosions; 
         Destroy(gameObject);
     }
 }

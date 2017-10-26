@@ -17,6 +17,9 @@ public class Dog : MonoBehaviour {
     public float bombSpawnOffset = 2f;
     public float bombAimedThrowStrength = 10f;
     public float bombNeutralThrowStrength = 1.5f;
+    public float bombExplosionTime = 1f;
+    public int bonusExplosions = 0;
+    public int maxBombExplosions = 3;
     public float invincibiltyDamageTimer = .2f;
     public int playerNum = 1;
     public Foot foot;
@@ -28,6 +31,7 @@ public class Dog : MonoBehaviour {
     public Text coinText;
     public AudioClip jumpAudioClip;
     public AudioClip ouchAudioClip;
+    public GameObject[] bonusBombSprites;
 
     [HideInInspector]
     public bool isDead = false;
@@ -56,13 +60,18 @@ public class Dog : MonoBehaviour {
 
         foot.onLand += OnLand;
         foot.onLeaveGround += OnLeaveGround;
-        foot.onJumpOnEnemyHandler += OnJumpOnEnemy;
+        foot.onJumpOnEnemy += OnJumpOnEnemy;
+        foot.onJumpOnOtherPlayer += OnJumpOnOtherPlayer;
 
         getHitCooldownTimer = invincibiltyDamageTimer;
         healthText.text = "Health: " + health.ToString();
         coinText.text = "Coins: " + coinScore.ToString();
         _lineRenderer.positionCount = 2;
         GameManager.instance.PlayerJoined();
+        for(int x=0; x<bonusBombSprites.Length; x++)
+        {
+            bonusBombSprites[x].SetActive(false);
+        }
     }
 
     public void Update()
@@ -73,13 +82,17 @@ public class Dog : MonoBehaviour {
         HandleInput();
         HandleCooldowns();
     }
-
+  
     public void GetHit(int damage)
-    {
-        // TODO
+    { 
         if (getHitCooldownTimer <= invincibiltyDamageTimer)
             return;
 
+        GetHitDirect(damage);
+    }
+
+    public void GetHitDirect(int damage)
+    {
         getHitCooldownTimer = 0;
         _audioSource.PlayOneShot(ouchAudioClip);
         StartCoroutine(Blink(invincibiltyDamageTimer));
@@ -96,11 +109,19 @@ public class Dog : MonoBehaviour {
     {
         coinScore += coinVal;
         coinText.text = "Coins: " + coinScore.ToString();
+
+        bonusExplosions = Mathf.Clamp(coinScore / 2, 0, maxBombExplosions);
+        for (int x=0; x<bonusExplosions; x++)
+        {
+            bonusBombSprites[x].SetActive(true);
+        }
     }
 
     private void Die()
     {
         // TODO
+        if (isDead) return;
+
         isDead = true;
         GameManager.instance.PlayerDied();
         Destroy(GetComponent<BoxCollider2D>());
@@ -148,10 +169,14 @@ public class Dog : MonoBehaviour {
             {
                 GameObject bombClone = Instantiate(bomb, transform.position + (axisInput.normalized * bombSpawnOffset), Quaternion.identity);
                 bombClone.GetComponent<Rigidbody2D>().velocity = axisInput * bombAimedThrowStrength;
+                bombClone.GetComponent<Bomb>().explosionTime = bombExplosionTime;
+                bombClone.GetComponent<Bomb>().bonusExplosions = bonusExplosions;
             } else {
-                GameObject bombClone = Instantiate(bomb, transform.position + ((new Vector3(_rigidBody.velocity.x, _rigidBody.velocity.y, 0)).normalized * bombSpawnOffset), Quaternion.identity);
+                GameObject bombClone = Instantiate(bomb, transform.position + (axisInput.normalized * bombSpawnOffset), Quaternion.identity);
                 //bombClone.GetComponent<Rigidbody2D>().velocity = _rigidBody.velocity * bombNeutralThrowStrength;
                 bombClone.GetComponent<Rigidbody2D>().velocity = axisInput * bombAimedThrowStrength;
+                bombClone.GetComponent<Bomb>().explosionTime = bombExplosionTime;
+                bombClone.GetComponent<Bomb>().bonusExplosions = bonusExplosions;
             }  
         }
     }
@@ -178,7 +203,7 @@ public class Dog : MonoBehaviour {
     private void HandleJump()
     { 
         //if (Input.GetButtonDown("Jump") || Input.GetAxisRaw("Vertical")>=0.1)
-        if (Input.GetButtonDown("Jump_Player" + playerNum) || (Input.GetButtonDown("Vertical_Player" + playerNum)))
+        if (Input.GetButtonDown("Jump_Player" + playerNum))
         {
 
             if (numJumps >= maxJumps || (!onGround && _rigidBody.velocity.y > dashForce * 2))
@@ -207,10 +232,11 @@ public class Dog : MonoBehaviour {
 
     private void HandleAnimation()
     {
-        _animator.SetFloat("x-speed", Mathf.Abs(_rigidBody.velocity.x));
-        if (_rigidBody.velocity.x > 0)
+        Vector3 inputAxis = new Vector3(Input.GetAxisRaw("Horizontal_Player" + playerNum), Input.GetAxisRaw("Vertical_Player" + playerNum));
+        _animator.SetFloat("x-speed", Mathf.Abs(inputAxis.x));
+        if (inputAxis.x > 0)
             _spriteRenderer.flipX = true;
-        if (_rigidBody.velocity.x < 0)
+        if (inputAxis.x < 0)
             _spriteRenderer.flipX = false;
 
     }
@@ -218,6 +244,14 @@ public class Dog : MonoBehaviour {
     private void OnJumpOnEnemy(Enemy enemy)
     {
         enemy.GetHit(jumpDamage);
+        _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, jumpForce);
+
+        _audioSource.PlayOneShot(ouchAudioClip);
+    }
+
+    private void OnJumpOnOtherPlayer(Dog player)
+    {
+        player.GetHit(jumpDamage);
         _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, jumpForce);
 
         _audioSource.PlayOneShot(ouchAudioClip);

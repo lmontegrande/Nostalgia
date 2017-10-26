@@ -9,9 +9,11 @@ public class Foot : MonoBehaviour {
     public delegate void onLandHandler();
     public delegate void onLeaveGroundHandle();
     public delegate void onJumpOnEnemyHandle(Enemy enemy);
+    public delegate void onJumpOnOtherPlayerHandle(Dog dog);
     public onLandHandler onLand;
-    public onJumpOnEnemyHandle onJumpOnEnemyHandler;
+    public onJumpOnEnemyHandle onJumpOnEnemy;
     public onLeaveGroundHandle onLeaveGround;
+    public onJumpOnOtherPlayerHandle onJumpOnOtherPlayer;
 
     public void OnTriggerEnter2D(Collider2D other)
     {
@@ -21,7 +23,11 @@ public class Foot : MonoBehaviour {
         }
         if (other.tag == "Enemy")
         {
-            onJumpOnEnemyHandler.Invoke(other.GetComponent<Enemy>());
+            onJumpOnEnemy.Invoke(other.GetComponent<Enemy>());
+        }
+        if (other.tag == "Player")
+        {
+            onJumpOnOtherPlayer.Invoke(other.GetComponent<Dog>());
         }
     }
 

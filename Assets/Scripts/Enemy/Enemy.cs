@@ -10,6 +10,12 @@ public class Enemy : MonoBehaviour {
 
     public virtual void GetHit(int damage)
     {
+        // Invincibility Timer accounted for here
+        GetHitDirect(damage);
+    }
+
+    public virtual void GetHitDirect(int damage)
+    {
         health -= damage;
         if (health <= 0)
         {
