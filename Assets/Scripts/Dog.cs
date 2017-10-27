@@ -8,7 +8,7 @@ public class Dog : MonoBehaviour {
     public int health = 5;
     public int jumpDamage = 1;
     public float jumpForce = 10f;
-    public float dashForce = 5f;
+    public float airJumpMin = 5f;
     public float runSpeed = 5f;
     public int maxJumps = 2;
     public float dashDistance = 1f;
@@ -32,6 +32,7 @@ public class Dog : MonoBehaviour {
     public Text coinText;
     public AudioClip jumpAudioClip;
     public AudioClip ouchAudioClip;
+    public AudioClip dashAudioClip;
     public GameObject[] bonusBombSprites;
     public int lastAttackerPlayerNum;
 
@@ -109,7 +110,7 @@ public class Dog : MonoBehaviour {
   
     public void GetHit(int damage)
     { 
-        if (getHitCooldownTimer <= invincibiltyDamageTimer)
+        if (getHitCooldownTimer <= invincibiltyDamageTimer || isDashing)
             return;
 
         GetHitDirect(damage);
@@ -117,7 +118,7 @@ public class Dog : MonoBehaviour {
 
     public void GetHit(int damage, int attackerPlayerNum)
     {
-        if (getHitCooldownTimer <= invincibiltyDamageTimer)
+        if (getHitCooldownTimer <= invincibiltyDamageTimer || isDashing)
             return;
 
         lastAttackerPlayerNum = attackerPlayerNum;
@@ -215,7 +216,7 @@ public class Dog : MonoBehaviour {
             if (!hasJumpDash && !onGround) return;
 
             if (dashCooldownTimer <= (dashCooldown + dashTime)) return;
-
+ 
             if (_rigidBody.velocity.x >= 0.1)
             {
                 StartCoroutine(DashTo(gameObject.transform.position + (Vector3.right * dashDistance)));
@@ -233,7 +234,7 @@ public class Dog : MonoBehaviour {
         if (Input.GetButtonDown("Jump_Player" + playerNum))
         {
 
-            if (numJumps >= maxJumps || (!onGround && _rigidBody.velocity.y > dashForce * 2))
+            if (numJumps >= maxJumps || (!onGround && _rigidBody.velocity.y > airJumpMin * 2))
             {
                 return;
             }
@@ -301,8 +302,9 @@ public class Dog : MonoBehaviour {
         dashCooldownTimer = 0f;
         _animator.speed = 4;
         _animator.SetBool("dashing", true);
+        _audioSource.PlayOneShot(dashAudioClip);
 
-            if (!onGround)
+        if (!onGround)
         {
             hasJumpDash = false;
         }
@@ -322,6 +324,7 @@ public class Dog : MonoBehaviour {
             yield return null;
         }
 
+        _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, Mathf.Clamp(_rigidBody.velocity.y, 0, Mathf.Infinity));
         _animator.speed = 1;
         _animator.SetBool("dashing", false);
         isDashing = false;

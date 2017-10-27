@@ -23,7 +23,7 @@ public class RespawningFloor : MonoBehaviour {
 	public void OnGetHit(Vector3 flyVelocity)
     {
         GetComponent<Rigidbody2D>().velocity = flyVelocity;
-        GetComponent<SpriteRenderer>().color = Color.black;
+        GetComponent<SpriteRenderer>().color = Color.gray;
         GetComponent<SpriteRenderer>().sortingOrder = 1;
         StartCoroutine(Respawn());
     }
