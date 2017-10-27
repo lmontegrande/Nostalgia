@@ -23,6 +23,8 @@ public class RespawningFloor : MonoBehaviour {
 	public void OnGetHit(Vector3 flyVelocity)
     {
         GetComponent<Rigidbody2D>().velocity = flyVelocity;
+        GetComponent<SpriteRenderer>().color = Color.black;
+        GetComponent<SpriteRenderer>().sortingOrder = 1;
         StartCoroutine(Respawn());
     }
 
@@ -39,6 +41,7 @@ public class RespawningFloor : MonoBehaviour {
             GetComponent<BoxCollider2D>().enabled = true;
             StopCoroutine(c);
             GetComponent<SpriteRenderer>().color = startingColor;
+            GetComponent<SpriteRenderer>().sortingOrder = 0;
         } else {
             Destroy(gameObject);
         }

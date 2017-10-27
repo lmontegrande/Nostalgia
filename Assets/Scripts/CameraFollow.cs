@@ -40,18 +40,18 @@ public class CameraFollow : MonoBehaviour {
 
         if (players.Length >= 2)
         {
-            Vector3 deltaVector = Vector3.zero;
+            Vector2 deltaVector = Vector2.zero;
             foreach (GameObject player in players)
             {
                 if ((targetPosition - player.transform.position).magnitude >= deltaVector.magnitude)
                 {
-                    deltaVector = player.transform.position - targetPosition; 
-                    //deltaVector = player.transform.position - transform.position;
+                    deltaVector = player.transform.position - targetPosition;
                 }
-            } 
- 
+            }
+
             // Fix Camera Scaling for multiple characters
-            _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, (Mathf.Clamp(deltaVector.magnitude / 2, minOrthographicSize, maxOrthographicSize)), Time.deltaTime);
+            Debug.Log(deltaVector + " " + deltaVector.magnitude);
+            _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, (Mathf.Clamp(deltaVector.magnitude, minOrthographicSize, Mathf.Infinity)), Time.deltaTime);
         } else {
             _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, minOrthographicSize, Time.deltaTime);
         }

@@ -13,6 +13,9 @@ public class Bomb : MonoBehaviour {
     [HideInInspector]
     public int bonusExplosions = 0;
 
+    [HideInInspector]
+    public int ownerPlayerNum = -1;
+
     public void Start()
     {
         StartCoroutine(Explode());
@@ -22,7 +25,8 @@ public class Bomb : MonoBehaviour {
     {
         yield return new WaitForSeconds(explosionTime);
         GameObject explosionClone = Instantiate(explosion, transform.position, Quaternion.identity);
-        explosionClone.GetComponent<Explosion>().bonusExplosions = bonusExplosions; 
+        explosionClone.GetComponent<Explosion>().bonusExplosions = bonusExplosions;
+        explosionClone.GetComponent<Explosion>().ownerPlayerNum = ownerPlayerNum;
         Destroy(gameObject);
     }
 }

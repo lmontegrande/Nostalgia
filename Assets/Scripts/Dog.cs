@@ -27,11 +27,13 @@ public class Dog : MonoBehaviour {
     public GameObject bomb;
     public WallCollisionDetector leftCollider;
     public WallCollisionDetector rightCollider;
+    public Text playerNameText;
     public Text healthText;
     public Text coinText;
     public AudioClip jumpAudioClip;
     public AudioClip ouchAudioClip;
     public GameObject[] bonusBombSprites;
+    public int lastAttackerPlayerNum;
 
     [HideInInspector]
     public bool isDead = false;
@@ -49,6 +51,7 @@ public class Dog : MonoBehaviour {
     private bool isAiming = false;
     private float dashCooldownTimer = 100f;
     private float getHitCooldownTimer = 0f;
+    private Color playerColor;
 
     public void Start()
     {
@@ -64,8 +67,29 @@ public class Dog : MonoBehaviour {
         foot.onJumpOnOtherPlayer += OnJumpOnOtherPlayer;
 
         getHitCooldownTimer = invincibiltyDamageTimer;
-        healthText.text = "Health: " + health.ToString();
-        coinText.text = "Coins: " + coinScore.ToString();
+        healthText.text = health.ToString();
+        coinText.text = coinScore.ToString();
+        playerNameText.text = "Player " + playerNum.ToString();
+        switch(playerNum)
+        {
+            case 1:
+                playerColor = GameManager.instance.player1Color;
+                break;
+            case 2:
+                playerColor = GameManager.instance.player2Color;
+                break;
+            case 3:
+                playerColor = GameManager.instance.player3Color;
+                break;
+            case 4:
+                playerColor = GameManager.instance.player4Color;
+                break;
+            case 5:
+                playerColor = GameManager.instance.player5Color;
+                break;
+        }
+
+        playerNameText.color = playerColor;
         _lineRenderer.positionCount = 2;
         GameManager.instance.PlayerJoined();
         for(int x=0; x<bonusBombSprites.Length; x++)
@@ -91,13 +115,22 @@ public class Dog : MonoBehaviour {
         GetHitDirect(damage);
     }
 
+    public void GetHit(int damage, int attackerPlayerNum)
+    {
+        if (getHitCooldownTimer <= invincibiltyDamageTimer)
+            return;
+
+        lastAttackerPlayerNum = attackerPlayerNum;
+        GetHitDirect(damage);
+    } 
+
     public void GetHitDirect(int damage)
     {
         getHitCooldownTimer = 0;
         _audioSource.PlayOneShot(ouchAudioClip);
         StartCoroutine(Blink(invincibiltyDamageTimer));
-        health -= damage;
-        healthText.text = "Health: " + health.ToString();
+        health = (int) Mathf.Clamp(health - damage, 0, Mathf.Infinity); 
+        healthText.text = health.ToString();
         _rigidBody.velocity = Vector2.up * jumpForce;
         if (health <= 0)
         {
@@ -108,7 +141,7 @@ public class Dog : MonoBehaviour {
     public void GainCoin(int coinVal)
     {
         coinScore += coinVal;
-        coinText.text = "Coins: " + coinScore.ToString();
+        coinText.text = coinScore.ToString();
 
         bonusExplosions = Mathf.Clamp(coinScore / 2, 0, maxBombExplosions);
         for (int x=0; x<bonusExplosions; x++)
@@ -123,7 +156,7 @@ public class Dog : MonoBehaviour {
         if (isDead) return;
 
         isDead = true;
-        GameManager.instance.PlayerDied();
+        GameManager.instance.PlayerDied(this);
         Destroy(GetComponent<BoxCollider2D>());
         Destroy(GetComponent<CircleCollider2D>());
         Destroy(gameObject, 1f);
@@ -137,16 +170,17 @@ public class Dog : MonoBehaviour {
             return;
 
         // Movement
-        HandleWalk();
+        HandleAxisInput();
         HandleJump();
         HandleDash();
     }
 
-    private void HandleWalk()
+    private void HandleAxisInput()
     {
         bool touchingWallInWrongDirection = false;
         if (Input.GetAxisRaw("Horizontal_Player" + playerNum) >= 0.1 && rightCollider.isHittingWall) touchingWallInWrongDirection = true;
         if (Input.GetAxisRaw("Horizontal_Player" + playerNum) <= 0.1 && leftCollider.isHittingWall) touchingWallInWrongDirection = true;
+        //if (Input.GetAxisRaw("Vertical_Player" + playerNum) <= -0.5 && !onGround) _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, -jumpForce);
         if (!touchingWallInWrongDirection)
             _rigidBody.velocity = new Vector2(Input.GetAxisRaw("Horizontal_Player" + playerNum) * runSpeed, _rigidBody.velocity.y);
     }
@@ -165,19 +199,12 @@ public class Dog : MonoBehaviour {
         // Throw Bomba
         if (Input.GetButtonDown("Fire1_Player" + playerNum))
         {
-            if (isAiming)
-            {
-                GameObject bombClone = Instantiate(bomb, transform.position + (axisInput.normalized * bombSpawnOffset), Quaternion.identity);
-                bombClone.GetComponent<Rigidbody2D>().velocity = axisInput * bombAimedThrowStrength;
-                bombClone.GetComponent<Bomb>().explosionTime = bombExplosionTime;
-                bombClone.GetComponent<Bomb>().bonusExplosions = bonusExplosions;
-            } else {
-                GameObject bombClone = Instantiate(bomb, transform.position + (axisInput.normalized * bombSpawnOffset), Quaternion.identity);
-                //bombClone.GetComponent<Rigidbody2D>().velocity = _rigidBody.velocity * bombNeutralThrowStrength;
-                bombClone.GetComponent<Rigidbody2D>().velocity = axisInput * bombAimedThrowStrength;
-                bombClone.GetComponent<Bomb>().explosionTime = bombExplosionTime;
-                bombClone.GetComponent<Bomb>().bonusExplosions = bonusExplosions;
-            }  
+            GameObject bombClone = Instantiate(bomb, transform.position + (axisInput.normalized * bombSpawnOffset), Quaternion.identity);
+            bombClone.GetComponent<SpriteRenderer>().color = playerColor;
+            bombClone.GetComponent<Rigidbody2D>().velocity = axisInput * bombAimedThrowStrength;
+            bombClone.GetComponent<Bomb>().explosionTime = bombExplosionTime;
+            bombClone.GetComponent<Bomb>().bonusExplosions = bonusExplosions;
+            bombClone.GetComponent<Bomb>().ownerPlayerNum = playerNum;
         }
     }
 
@@ -215,10 +242,7 @@ public class Dog : MonoBehaviour {
 
             Destroy(Instantiate(doubleJumpParticle, foot.transform.position, Quaternion.identity), .25f);
 
-            _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, jumpForce);
-            // This way is broken on inconsistent frame rate comps
-            //_rigidBody.velocity = new Vector2(_rigidBody.velocity.x, 0);
-            //_rigidBody.AddForce(Vector2.up * jumpForce * (1 / Time.deltaTime));
+            _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, jumpForce); 
 
             _audioSource.PlayOneShot(jumpAudioClip);
         }
@@ -251,7 +275,7 @@ public class Dog : MonoBehaviour {
 
     private void OnJumpOnOtherPlayer(Dog player)
     {
-        player.GetHit(jumpDamage);
+        player.GetHit(jumpDamage, playerNum);
         _rigidBody.velocity = new Vector2(_rigidBody.velocity.x, jumpForce);
 
         _audioSource.PlayOneShot(ouchAudioClip);
@@ -305,14 +329,13 @@ public class Dog : MonoBehaviour {
 
     private IEnumerator Blink(float duration)
     {
-        Color currentColor = GetComponent<SpriteRenderer>().color;
         while (getHitCooldownTimer < duration)
         {
             yield return new WaitForSeconds(.05f);
             GetComponent<SpriteRenderer>().color = new Color(0xFF, 0xFF, 0xFF, 0x00);
             yield return new WaitForSeconds(.05f);
-            GetComponent<SpriteRenderer>().color = currentColor;
+            GetComponent<SpriteRenderer>().color = playerColor;
         }
-        GetComponent<SpriteRenderer>().color = currentColor;
+        GetComponent<SpriteRenderer>().color = playerColor;
     }
 }
